@@ -45,11 +45,6 @@ type Transaction struct {
 	TransactionTime time.Time
 }
 
-//type GetUserMessage struct {
-//	Id    uint64 `json:"id"`
-//	Token string `json:"token"`
-//}
-
 type NewUserMessage struct {
 	Id      uint64  `json:"id"`
 	Balance float32 `json:"balance"`

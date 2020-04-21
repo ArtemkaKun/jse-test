@@ -12,11 +12,11 @@ func CheckChanges() {
 
 		time.Sleep(10 * time.Second)
 
-		new_users := make(map[uint64]*User)
-		deepCopyMap(new_users, GetUsersCache())
+		newUsers := make(map[uint64]*User)
+		deepCopyMap(newUsers, GetUsersCache())
 
-		if !reflect.DeepEqual(users, new_users) {
-			for _, one_user := range new_users {
+		if !reflect.DeepEqual(users, newUsers) {
+			for _, one_user := range newUsers {
 				updateUser(one_user)
 			}
 		}
