@@ -1,5 +1,10 @@
 package jse_test
 
-func main() {
+import (
+	"log"
+	"net/http"
+)
 
+func main() {
+	log.Fatal(http.ListenAndServe(":8000", router))
 }
