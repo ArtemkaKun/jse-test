@@ -19,16 +19,24 @@ func init() {
 	}
 }
 
-func addNewUserToDB(new_user User) {
-	_, err := connection.Exec(context.Background(), "INSERT INTO users VALUES($1, $2)", new_user.Id, new_user.Balance)
+func addNewUserToDB(newUser User) {
+	_, err := connection.Exec(context.Background(), "INSERT INTO users VALUES($1, $2)", newUser.Id, newUser.Balance)
 	if err != nil {
 		fmt.Println(fmt.Errorf("Error while inserting: %v\n", err))
 	}
 }
 
-func addNewDeposit(new_deposit Deposit) {
-	_, err := connection.Exec(context.Background(), "INSERT INTO users VALUES($1, $2, $3, $4, $5)", new_deposit.DepositId, new_deposit.UserId,
-		new_deposit.BalanceBefore, new_deposit.BalanceAfter, new_deposit.DepositTime)
+func addNewDeposit(newDeposit Deposit) {
+	_, err := connection.Exec(context.Background(), "INSERT INTO deposits VALUES($1, $2, $3, $4, $5)", newDeposit.DepositId, newDeposit.UserId,
+		newDeposit.BalanceBefore, newDeposit.BalanceAfter, newDeposit.DepositTime)
+	if err != nil {
+		fmt.Println(fmt.Errorf("Error while inserting: %v\n", err))
+	}
+}
+
+func addNewTransaction(newTransaction Transaction) {
+	_, err := connection.Exec(context.Background(), "INSERT INTO transactions VALUES($1, $2, $3, $4, $5, $6, $7)", newTransaction.TransactionId, newTransaction.UserId,
+		newTransaction.Type, newTransaction.Amount, newTransaction.BalanceBefore, newTransaction.BalanceAfter, newTransaction.TransactionTime)
 	if err != nil {
 		fmt.Println(fmt.Errorf("Error while inserting: %v\n", err))
 	}

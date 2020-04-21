@@ -83,19 +83,19 @@ func addUserDeposit(writer http.ResponseWriter, req *http.Request) {
 	DecodingJSONError(err)
 
 	if newMessage.Token != TOKEN {
-		sendAddError(writer, fmt.Sprintf("Autentification error: %v", http.StatusUnauthorized), 0)
+		sendError(writer, fmt.Sprintf("Autentification error: %v", http.StatusUnauthorized))
 		return
 	}
 
 	if !isIdExist(newMessage.Id) {
-		sendAddError(writer, "User with the this ID doesn't exist!", 0)
+		sendError(writer, "User with the this ID doesn't exist!")
 		return
 	}
 
 	deposit := createNewDeposit(newMessage)
 	setNewBalance(deposit, newMessage)
 
-	sendAddError(writer, "", deposit.BalanceAfter)
+	sendErrorWithBalance(writer, "", deposit.BalanceAfter)
 }
 
 func createNewDeposit(newMessage AddDepositMessage) Deposit {
@@ -113,11 +113,71 @@ func createNewDeposit(newMessage AddDepositMessage) Deposit {
 func setNewBalance(newDeposit Deposit, newMessage AddDepositMessage) {
 	SetUserBalance(newDeposit.UserId, newDeposit.BalanceAfter)
 	IncreaseUserDepositCount(newDeposit.UserId)
-	IncreaseUserDepositAmount(newDeposit.UserId, newMessage.Amount)
+	IncreaseUserDepositSum(newDeposit.UserId, newMessage.Amount)
+	addNewDeposit(newDeposit)
 }
 
 func makeTransaction(writer http.ResponseWriter, req *http.Request) {
+	writer.Header().Set("Content-Type", "application/json")
 
+	var newMessage AddTransactionMessage
+	err := json.NewDecoder(req.Body).Decode(&newMessage)
+	DecodingJSONError(err)
+
+	if newMessage.Token != TOKEN {
+		sendError(writer, fmt.Sprintf("Autentification error: %v", http.StatusUnauthorized))
+		return
+	}
+
+	if !isIdExist(newMessage.Id) {
+		sendError(writer, "User with the this ID doesn't exist!")
+		return
+	}
+
+	if GetUserBalance(newMessage.Id)-newMessage.Amount < 0 && newMessage.Type == "Bet" {
+		sendError(writer, "Doesn't have enough money on balance to do this action!")
+		return
+	}
+
+	transaction := createNewTransaction(newMessage)
+	setNewTransaction(transaction, newMessage)
+
+	sendErrorWithBalance(writer, "", transaction.BalanceAfter)
+}
+
+func setNewTransaction(newTransaction Transaction, newMessage AddTransactionMessage) {
+	SetUserBalance(newTransaction.UserId, newTransaction.BalanceAfter)
+
+	if newMessage.Type == "Bet" {
+		IncreaseUserBetCount(newTransaction.UserId)
+		IncreaseUserBetSum(newTransaction.UserId, newMessage.Amount)
+		return
+	}
+
+	IncreaseUserWinCount(newTransaction.UserId)
+	IncreaseUserWinSum(newTransaction.UserId, newMessage.Amount)
+}
+
+func createNewTransaction(newMessage AddTransactionMessage) Transaction {
+	var newTransaction Transaction
+
+	id := newMessage.Id
+	amount := newMessage.Amount
+
+	newTransaction.UserId = id
+	newTransaction.TransactionId = newMessage.TransactionId
+	newTransaction.Type = newMessage.Type
+	newTransaction.Amount = amount
+	newTransaction.BalanceBefore = GetUserBalance(id)
+
+	if newMessage.Type == "Bet" {
+		amount *= -1
+	}
+
+	newTransaction.BalanceAfter = newTransaction.BalanceBefore + amount
+	newTransaction.TransactionTime = fmt.Sprintf("%v", time.Now())
+
+	return newTransaction
 }
 
 func decodeRequestJSON(req *http.Request, newMessage NewUserMessage) {
@@ -125,8 +185,8 @@ func decodeRequestJSON(req *http.Request, newMessage NewUserMessage) {
 	DecodingJSONError(err)
 }
 
-func sendAddError(writer http.ResponseWriter, errorText string, newBalance float32) {
-	errorMessage := AddReqError{Error: errorText, Balance: newBalance}
+func sendErrorWithBalance(writer http.ResponseWriter, errorText string, newBalance float32) {
+	errorMessage := ErrorWithBalance{Error: errorText, Balance: newBalance}
 
 	err := json.NewEncoder(writer).Encode(errorMessage)
 	if err != nil {

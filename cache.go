@@ -16,35 +16,51 @@ func isIdExist(id uint64) bool {
 	return true
 }
 
-func addNewUserToBuffer(new_user User) {
-	user_id := new_user.Id
+func addNewUserToBuffer(newUser User) {
+	userId := newUser.Id
 
-	usersCache[user_id] = &new_user
-	usersStatsCache[user_id] = &UserStats{0, 0,
+	usersCache[userId] = &newUser
+	usersStatsCache[userId] = &UserStats{0, 0,
 		0, 0, 0, 0}
 }
 
 func GetAllUserInfo(id uint64) AllUserStats {
-	main_stats := usersCache[id]
-	other_stats := usersStatsCache[id]
+	mainStats := usersCache[id]
+	otherStats := usersStatsCache[id]
 
-	return AllUserStats{main_stats.Id, main_stats.Balance, other_stats.DepositCount,
-		other_stats.DepositSum, other_stats.BetCount, other_stats.BetSum,
-		other_stats.WinCount, other_stats.WinSum}
+	return AllUserStats{mainStats.Id, mainStats.Balance, otherStats.DepositCount,
+		otherStats.DepositSum, otherStats.BetCount, otherStats.BetSum,
+		otherStats.WinCount, otherStats.WinSum}
 }
 
 func GetUserBalance(id uint64) float32 {
 	return usersCache[id].Balance
 }
 
-func SetUserBalance(id uint64, new_balance float32) {
-	usersCache[id].Balance = new_balance
+func SetUserBalance(id uint64, newBalance float32) {
+	usersCache[id].Balance = newBalance
 }
 
 func IncreaseUserDepositCount(id uint64) {
 	usersStatsCache[id].DepositCount++
 }
 
-func IncreaseUserDepositAmount(id uint64, new_balance float32) {
-	usersStatsCache[id].DepositSum += new_balance
+func IncreaseUserDepositSum(id uint64, newBalance float32) {
+	usersStatsCache[id].DepositSum += newBalance
+}
+
+func IncreaseUserBetCount(id uint64) {
+	usersStatsCache[id].BetCount++
+}
+
+func IncreaseUserBetSum(id uint64, newBalance float32) {
+	usersStatsCache[id].BetSum += newBalance
+}
+
+func IncreaseUserWinCount(id uint64) {
+	usersStatsCache[id].WinCount++
+}
+
+func IncreaseUserWinSum(id uint64, newBalance float32) {
+	usersStatsCache[id].WinSum += newBalance
 }
