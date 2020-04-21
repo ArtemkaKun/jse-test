@@ -1,4 +1,4 @@
-package jse_test
+package main
 
 import (
 	"encoding/json"
@@ -9,6 +9,7 @@ import (
 )
 
 var router *mux.Router
+var TOKEN = "testtask"
 
 func init() {
 	router = mux.NewRouter()
@@ -20,60 +21,55 @@ func init() {
 
 func createNewUser(writer http.ResponseWriter, req *http.Request) {
 	writer.Header().Set("Content-Type", "application/json")
+
 	var newMessage NewUserMessage
-	var newUser User
+	decodeRequestJSON(req, newMessage)
 
-	errorMessage := ReqError{Error: ""}
-
-	err := json.NewDecoder(req.Body).Decode(&newMessage)
-	DecodingJSONError(err)
-
-	if newMessage.Token != "testtask" {
-		errorMessage = ReqError{Error: fmt.Sprintf("Autentification error: %v", http.StatusUnauthorized)}
-	}
-
-	if isIdExist(newMessage.Id) {
-		errorMessage = ReqError{Error: "User with the same ID already exist!"}
-	}
-
-	if errorMessage.Error != "" {
-		sendError(writer, errorMessage)
+	if newMessage.Token != TOKEN {
+		sendError(writer, fmt.Sprintf("Autentification error: %v", http.StatusUnauthorized))
 		return
 	}
 
-	newUser = User{Id: newMessage.Id, Balance: newMessage.Balance}
+	if isIdExist(newMessage.Id) {
+		sendError(writer, "User with the same ID already exist!")
+		return
+	}
 
+	newUser := User{Id: newMessage.Id, Balance: newMessage.Balance}
+
+	addNewUser(newUser)
+
+	sendError(writer, "")
+}
+
+func addNewUser(newUser User) {
 	addNewUserToBuffer(newUser)
 	addNewUserToDB(newUser)
-
-	sendError(writer, errorMessage)
 }
 
 func getUserInfo(writer http.ResponseWriter, req *http.Request) {
 	writer.Header().Set("Content-Type", "application/json")
-	var newMessage GetUserMessage
 
-	errorMessage := ReqError{Error: ""}
+	var newMessage NewUserMessage
+	decodeRequestJSON(req, newMessage)
 
-	err := json.NewDecoder(req.Body).Decode(&newMessage)
-	DecodingJSONError(err)
-
-	if newMessage.Token != "testtask" {
-		errorMessage = ReqError{Error: fmt.Sprintf("Autentification error: %v", http.StatusUnauthorized)}
-	}
-
-	if !isIdExist(newMessage.Id) {
-		errorMessage = ReqError{Error: "User with the this ID doesn't exist!"}
-	}
-
-	if errorMessage.Error != "" {
-		sendError(writer, errorMessage)
+	if newMessage.Token != TOKEN {
+		sendError(writer, fmt.Sprintf("Autentification error: %v", http.StatusUnauthorized))
 		return
 	}
 
-	all_stats := GetAllUserInfo(newMessage.Id)
+	if !isIdExist(newMessage.Id) {
+		sendError(writer, "User with the same ID doesn't exist!")
+		return
+	}
 
-	err = json.NewEncoder(writer).Encode(all_stats)
+	allStats := GetAllUserInfo(newMessage.Id)
+
+	sendAllStats(writer, allStats)
+}
+
+func sendAllStats(writer http.ResponseWriter, allStats AllUserStats) {
+	err := json.NewEncoder(writer).Encode(allStats)
 	if err != nil {
 		EncodingJSONError(err)
 	}
@@ -81,55 +77,66 @@ func getUserInfo(writer http.ResponseWriter, req *http.Request) {
 
 func addUserDeposit(writer http.ResponseWriter, req *http.Request) {
 	writer.Header().Set("Content-Type", "application/json")
+
 	var newMessage AddDepositMessage
-
-	errorMessage := AddReqError{Error: "", Balance: 0}
-
 	err := json.NewDecoder(req.Body).Decode(&newMessage)
 	DecodingJSONError(err)
 
-	if newMessage.Token != "testtask" {
-		errorMessage = AddReqError{Error: fmt.Sprintf("Autentification error: %v", http.StatusUnauthorized)}
-	}
-
-	if !isIdExist(newMessage.Id) {
-		errorMessage = AddReqError{Error: "User with the this ID doesn't exist!"}
-	}
-
-	if errorMessage.Error != "" {
-		sendAddError(writer, errorMessage)
+	if newMessage.Token != TOKEN {
+		sendAddError(writer, fmt.Sprintf("Autentification error: %v", http.StatusUnauthorized), 0)
 		return
 	}
 
+	if !isIdExist(newMessage.Id) {
+		sendAddError(writer, "User with the this ID doesn't exist!", 0)
+		return
+	}
+
+	deposit := createNewDeposit(newMessage)
+	setNewBalance(deposit, newMessage)
+
+	sendAddError(writer, "", deposit.BalanceAfter)
+}
+
+func createNewDeposit(newMessage AddDepositMessage) Deposit {
 	var newDeposit Deposit
+
 	newDeposit.UserId = newMessage.Id
 	newDeposit.DepositId = newMessage.DepositId
 	newDeposit.BalanceBefore = GetUserBalance(newDeposit.UserId)
 	newDeposit.BalanceAfter = newDeposit.BalanceBefore + newMessage.Amount
 	newDeposit.DepositTime = fmt.Sprintf("%v", time.Now())
 
+	return newDeposit
+}
+
+func setNewBalance(newDeposit Deposit, newMessage AddDepositMessage) {
 	SetUserBalance(newDeposit.UserId, newDeposit.BalanceAfter)
 	IncreaseUserDepositCount(newDeposit.UserId)
 	IncreaseUserDepositAmount(newDeposit.UserId, newMessage.Amount)
-
-	errorMessage.Balance = newDeposit.BalanceAfter
-	sendAddError(writer, errorMessage)
 }
 
-func DecodingJSONError(err error) {
-	if err != nil {
-		fmt.Println(fmt.Errorf("Error while decoding JSON: %v\n", err))
-	}
+func makeTransaction(writer http.ResponseWriter, req *http.Request) {
+
 }
 
-func sendAddError(writer http.ResponseWriter, errorMessage AddReqError) {
+func decodeRequestJSON(req *http.Request, newMessage NewUserMessage) {
+	err := json.NewDecoder(req.Body).Decode(&newMessage)
+	DecodingJSONError(err)
+}
+
+func sendAddError(writer http.ResponseWriter, errorText string, newBalance float32) {
+	errorMessage := AddReqError{Error: errorText, Balance: newBalance}
+
 	err := json.NewEncoder(writer).Encode(errorMessage)
 	if err != nil {
 		EncodingJSONError(err)
 	}
 }
 
-func sendError(writer http.ResponseWriter, errorMessage ReqError) {
+func sendError(writer http.ResponseWriter, errorText string) {
+	errorMessage := map[string]string{"error": errorText}
+
 	err := json.NewEncoder(writer).Encode(errorMessage)
 	if err != nil {
 		EncodingJSONError(err)
@@ -138,4 +145,10 @@ func sendError(writer http.ResponseWriter, errorMessage ReqError) {
 
 func EncodingJSONError(err error) {
 	fmt.Println(fmt.Errorf("Error while decoding JSON: %v\n", err))
+}
+
+func DecodingJSONError(err error) {
+	if err != nil {
+		fmt.Println(fmt.Errorf("Error while decoding JSON: %v\n", err))
+	}
 }

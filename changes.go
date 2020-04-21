@@ -1,1 +1,1 @@
-package jse_test
+package main

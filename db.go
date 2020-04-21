@@ -1,4 +1,4 @@
-package jse_test
+package main
 
 import (
 	"context"

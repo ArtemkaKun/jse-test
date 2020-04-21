@@ -1,4 +1,4 @@
-package jse_test
+package main
 
 var usersCache map[uint64]*User
 var usersStatsCache map[uint64]*UserStats

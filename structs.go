@@ -1,4 +1,4 @@
-package jse_test
+package main
 
 type User struct {
 	Id      uint64  `json:"id"`
@@ -31,10 +31,10 @@ type NewUserMessage struct {
 	Token   string  `json:"token"`
 }
 
-type GetUserMessage struct {
-	Id    uint64 `json:"id"`
-	Token string `json:"token"`
-}
+//type GetUserMessage struct {
+//	Id    uint64 `json:"id"`
+//	Token string `json:"token"`
+//}
 
 type AddDepositMessage struct {
 	Id        uint64  `json:"userid"`
@@ -51,11 +51,7 @@ type Deposit struct {
 	DepositTime   string
 }
 
-type ReqError struct {
-	Error string `json:"error"`
-}
-
 type AddReqError struct {
 	Error   string  `json:"error"`
-	Balance float32 `json:"error"`
+	Balance float32 `json:"balance"`
 }
