@@ -36,6 +36,26 @@ type GetUserMessage struct {
 	Token string `json:"token"`
 }
 
+type AddDepositMessage struct {
+	Id        uint64  `json:"userid"`
+	DepositId uint64  `json:"depositId"`
+	Amount    float32 `json:"amount"`
+	Token     string  `json:"token"`
+}
+
+type Deposit struct {
+	UserId        uint64
+	DepositId     uint64
+	BalanceBefore float32
+	BalanceAfter  float32
+	DepositTime   string
+}
+
 type ReqError struct {
 	Error string `json:"error"`
+}
+
+type AddReqError struct {
+	Error   string  `json:"error"`
+	Balance float32 `json:"error"`
 }

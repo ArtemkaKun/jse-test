@@ -32,3 +32,19 @@ func GetAllUserInfo(id uint64) AllUserStats {
 		other_stats.DepositSum, other_stats.BetCount, other_stats.BetSum,
 		other_stats.WinCount, other_stats.WinSum}
 }
+
+func GetUserBalance(id uint64) float32 {
+	return usersCache[id].Balance
+}
+
+func SetUserBalance(id uint64, new_balance float32) {
+	usersCache[id].Balance = new_balance
+}
+
+func IncreaseUserDepositCount(id uint64) {
+	usersStatsCache[id].DepositCount++
+}
+
+func IncreaseUserDepositAmount(id uint64, new_balance float32) {
+	usersStatsCache[id].DepositSum += new_balance
+}

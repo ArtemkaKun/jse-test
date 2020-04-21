@@ -25,3 +25,11 @@ func addNewUserToDB(new_user User) {
 		fmt.Println(fmt.Errorf("Error while inserting: %v\n", err))
 	}
 }
+
+func addNewDeposit(new_deposit Deposit) {
+	_, err := connection.Exec(context.Background(), "INSERT INTO users VALUES($1, $2, $3, $4, $5)", new_deposit.DepositId, new_deposit.UserId,
+		new_deposit.BalanceBefore, new_deposit.BalanceAfter, new_deposit.DepositTime)
+	if err != nil {
+		fmt.Println(fmt.Errorf("Error while inserting: %v\n", err))
+	}
+}

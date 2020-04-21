@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"time"
 )
 
 var router *mux.Router
@@ -78,9 +79,53 @@ func getUserInfo(writer http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func addUserDeposit(writer http.ResponseWriter, req *http.Request) {
+	writer.Header().Set("Content-Type", "application/json")
+	var newMessage AddDepositMessage
+
+	errorMessage := AddReqError{Error: "", Balance: 0}
+
+	err := json.NewDecoder(req.Body).Decode(&newMessage)
+	DecodingJSONError(err)
+
+	if newMessage.Token != "testtask" {
+		errorMessage = AddReqError{Error: fmt.Sprintf("Autentification error: %v", http.StatusUnauthorized)}
+	}
+
+	if !isIdExist(newMessage.Id) {
+		errorMessage = AddReqError{Error: "User with the this ID doesn't exist!"}
+	}
+
+	if errorMessage.Error != "" {
+		sendAddError(writer, errorMessage)
+		return
+	}
+
+	var newDeposit Deposit
+	newDeposit.UserId = newMessage.Id
+	newDeposit.DepositId = newMessage.DepositId
+	newDeposit.BalanceBefore = GetUserBalance(newDeposit.UserId)
+	newDeposit.BalanceAfter = newDeposit.BalanceBefore + newMessage.Amount
+	newDeposit.DepositTime = fmt.Sprintf("%v", time.Now())
+
+	SetUserBalance(newDeposit.UserId, newDeposit.BalanceAfter)
+	IncreaseUserDepositCount(newDeposit.UserId)
+	IncreaseUserDepositAmount(newDeposit.UserId, newMessage.Amount)
+
+	errorMessage.Balance = newDeposit.BalanceAfter
+	sendAddError(writer, errorMessage)
+}
+
 func DecodingJSONError(err error) {
 	if err != nil {
 		fmt.Println(fmt.Errorf("Error while decoding JSON: %v\n", err))
+	}
+}
+
+func sendAddError(writer http.ResponseWriter, errorMessage AddReqError) {
+	err := json.NewEncoder(writer).Encode(errorMessage)
+	if err != nil {
+		EncodingJSONError(err)
 	}
 }
 
