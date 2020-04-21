@@ -23,7 +23,7 @@ func createNewUser(writer http.ResponseWriter, req *http.Request) {
 	writer.Header().Set("Content-Type", "application/json")
 
 	var newMessage NewUserMessage
-	decodeRequestJSON(req, newMessage)
+	decodeRequestJSON(req, &newMessage)
 
 	if newMessage.Token != TOKEN {
 		sendError(writer, fmt.Sprintf("Autentification error: %v", http.StatusUnauthorized))
@@ -51,7 +51,7 @@ func getUserInfo(writer http.ResponseWriter, req *http.Request) {
 	writer.Header().Set("Content-Type", "application/json")
 
 	var newMessage NewUserMessage
-	decodeRequestJSON(req, newMessage)
+	decodeRequestJSON(req, &newMessage)
 
 	if newMessage.Token != TOKEN {
 		sendError(writer, fmt.Sprintf("Autentification error: %v", http.StatusUnauthorized))
@@ -105,7 +105,7 @@ func createNewDeposit(newMessage AddDepositMessage) Deposit {
 	newDeposit.DepositId = newMessage.DepositId
 	newDeposit.BalanceBefore = GetUserBalance(newDeposit.UserId)
 	newDeposit.BalanceAfter = newDeposit.BalanceBefore + newMessage.Amount
-	newDeposit.DepositTime = fmt.Sprintf("%v", time.Now())
+	newDeposit.DepositTime = time.Now()
 
 	return newDeposit
 }
@@ -151,11 +151,13 @@ func setNewTransaction(newTransaction Transaction, newMessage AddTransactionMess
 	if newMessage.Type == "Bet" {
 		IncreaseUserBetCount(newTransaction.UserId)
 		IncreaseUserBetSum(newTransaction.UserId, newMessage.Amount)
+		addNewTransaction(newTransaction)
 		return
 	}
 
 	IncreaseUserWinCount(newTransaction.UserId)
 	IncreaseUserWinSum(newTransaction.UserId, newMessage.Amount)
+	addNewTransaction(newTransaction)
 }
 
 func createNewTransaction(newMessage AddTransactionMessage) Transaction {
@@ -175,13 +177,13 @@ func createNewTransaction(newMessage AddTransactionMessage) Transaction {
 	}
 
 	newTransaction.BalanceAfter = newTransaction.BalanceBefore + amount
-	newTransaction.TransactionTime = fmt.Sprintf("%v", time.Now())
+	newTransaction.TransactionTime = time.Now()
 
 	return newTransaction
 }
 
-func decodeRequestJSON(req *http.Request, newMessage NewUserMessage) {
-	err := json.NewDecoder(req.Body).Decode(&newMessage)
+func decodeRequestJSON(req *http.Request, newMessage *NewUserMessage) {
+	err := json.NewDecoder(req.Body).Decode(newMessage)
 	DecodingJSONError(err)
 }
 

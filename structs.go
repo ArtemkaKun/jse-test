@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 type User struct {
 	Id      uint64  `json:"id"`
 	Balance float32 `json:"balance"`
@@ -30,7 +32,7 @@ type Deposit struct {
 	DepositId     uint64
 	BalanceBefore float32
 	BalanceAfter  float32
-	DepositTime   string
+	DepositTime   time.Time
 }
 
 type Transaction struct {
@@ -40,7 +42,7 @@ type Transaction struct {
 	Amount          float32
 	BalanceBefore   float32
 	BalanceAfter    float32
-	TransactionTime string
+	TransactionTime time.Time
 }
 
 //type GetUserMessage struct {

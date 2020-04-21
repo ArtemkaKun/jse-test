@@ -6,5 +6,6 @@ import (
 )
 
 func main() {
+	go CheckChanges()
 	log.Fatal(http.ListenAndServe(":8000", router))
 }

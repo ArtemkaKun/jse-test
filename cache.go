@@ -24,6 +24,10 @@ func addNewUserToBuffer(newUser User) {
 		0, 0, 0, 0}
 }
 
+func GetUsersCache() map[uint64]*User {
+	return usersCache
+}
+
 func GetAllUserInfo(id uint64) AllUserStats {
 	mainStats := usersCache[id]
 	otherStats := usersStatsCache[id]
